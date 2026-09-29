@@ -37,6 +37,23 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function redirectToThankYou() {
   setTimeout(() => {
-    window.location.href = "thank-you.html";
+    const hostname = window.location.hostname;
+    
+    // 1. Agar Custom Domain (flooringexpert.in) par hai
+    if (hostname.includes("flooringexpert.in")) {
+      window.location.href = "/thank-you.html";
+    } 
+    // 2. Agar GitHub Pages (username.github.io/flooringexpert) par hai
+    else if (hostname.includes("github.io")) {
+      window.location.href = "/flooringexpert/thank-you.html";
+    } 
+    // 3. Local Machine ya normal relative structure ke liye
+    else {
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      // Agar kisi subfolder ke andar hain toh ../ lagakar root par bhejega
+      const depth = pathSegments.length > 1 ? pathSegments.length - 1 : 0;
+      const prefix = depth > 0 ? "../".repeat(depth) : "./";
+      window.location.href = prefix + "thank-you.html";
+    }
   }, 200);
 }

@@ -1,60 +1,61 @@
 import os
 import re
 
-# जिस फोल्डर में फाइल्स हैं (वर्तमान फोल्डर)
 DIRECTORY = "."
-
-# कितने पेजों में बदलाव हुआ उसका ट्रैक रखने के लिए
 updated_count = 0
+
+# Regex patterns
+FORM_REGEX = re.compile(
+    r'<form\b[^>]*action=["\']https://formsubmit\.co/[^"\']*["\'][^>]*>',
+    re.IGNORECASE
+)
+NAME_REGEX = re.compile(r'\b(for|id|name)=["\']name["\']', re.IGNORECASE)
+MESSAGE_REGEX = re.compile(r'\b(for|id|name)=["\']message["\']', re.IGNORECASE)
+SUBMIT_BTN_REGEX = re.compile(r'<button\s+([^>]*type=["\']submit["\'][^>]*)>', re.IGNORECASE)
+BODY_REGEX = re.compile(r'</body>', re.IGNORECASE)
+
+SCRIPT_TAG = '    <script src="https://flooringexpert.in/form-handler.js"></script>\n</body>'
 
 for root, dirs, files in os.walk(DIRECTORY):
     for file in files:
         if file.endswith(".html"):
             filepath = os.path.join(root, file)
             
-            with open(filepath, "r", encoding="utf-8") as f:
-                content = f.read()
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    content = f.read()
 
-            original_content = content
+                original_content = content
 
-            # 1. पुराने Form Tag को हटाकर new ID 'enquiryForm' लगाना
-            content = re.sub(
-                r'<form\s+action="https://formsubmit\.co/[^"]*"\s+method="POST"',
-                '<form id="enquiryForm"',
-                content
-            )
+                # 1. Purane Form tag ko id="enquiryForm" se replace karein
+                content = FORM_REGEX.sub('<form id="enquiryForm">', content)
 
-            # 2. Name और ID Fields को Google Script के हिसाब से अपडेट करना
-            # Full Name (name="name" -> name="fullName")
-            content = content.replace('for="name"', 'for="fullName"')
-            content = content.replace('id="name"', 'id="fullName"')
-            content = content.replace('name="name"', 'name="fullName"')
+                # 2. Form fields ko Google Script ke hisab se rename karein
+                content = NAME_REGEX.sub(r'\1="fullName"', content)
+                content = MESSAGE_REGEX.sub(r'\1="details"', content)
 
-            # Project Details (name="message" -> name="details")
-            content = content.replace('for="message"', 'for="details"')
-            content = content.replace('id="message"', 'id="details"')
-            content = content.replace('name="message"', 'name="details"')
+                # 3. Submit Button me id="submitBtn" jodein
+                if 'id="submitBtn"' not in content and "id='submitBtn'" not in content:
+                    def add_btn_id(match):
+                        attrs = match.group(1)
+                        if 'id=' not in attrs.lower():
+                            return f'<button id="submitBtn" {attrs}>'
+                        return match.group(0)
+                    
+                    content = SUBMIT_BTN_REGEX.sub(add_btn_id, content)
 
-            # 3. Submit Button में id="submitBtn" जोड़ना (अगर पहले से नहीं है)
-            if 'id="submitBtn"' not in content:
-                content = re.sub(
-                    r'<button\s+type="submit"',
-                    '<button type="submit" id="submitBtn"',
-                    content
-                )
+                # 4. </body> se theek pehle form-handler.js Script Tag jodein
+                if 'form-handler.js' not in content and BODY_REGEX.search(content):
+                    content = BODY_REGEX.sub(SCRIPT_TAG, content, count=1)
 
-            # 4. </body> से ठीक पहले form-handler.js का टैग जोड़ना
-            if 'form-handler.js' not in content and '</body>' in content:
-                content = content.replace(
-                    '</body>',
-                    '    <script src="form-handler.js"></script>\n</body>'
-                )
+                # Save changes if modified
+                if content != original_content:
+                    with open(filepath, "w", encoding="utf-8") as f:
+                        f.write(content)
+                    print(f"✅ Updated: {filepath}")
+                    updated_count += 1
 
-            # अगर फाइल में बदलाव हुआ है तो उसे सेव करें
-            if content != original_content:
-                with open(filepath, "w", encoding="utf-8") as f:
-                    f.write(content)
-                print(f"✅ Updated: {filepath}")
-                updated_count += 1
+            except Exception as e:
+                print(f"❌ Error in {filepath}: {e}")
 
-print(f"\n🎉 कुल {updated_count} HTML फाइल्स सफलतापूर्वक अपडेट हो गई हैं!")
+print(f"\n🎉 Total {updated_count} HTML files automatically updated across all folders!")
