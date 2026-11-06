@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
   <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2161758031425276');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=2161758031425276&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '2161758031425276');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=2161758031425276&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
   
   <title>Request a Consultation | Flooring Expert Surface Solutions</title>
   <style>
@@ -100,7 +101,6 @@ src="https://www.facebook.com/tr?id=2161758031425276&ev=PageView&noscript=1"
       margin-bottom: 28px;
     }
     
-    /* Heading color updated to #c5a059 */
     .page-header h1 {
       font-size: 30px;
       color: #c5a059;
@@ -162,7 +162,7 @@ src="https://www.facebook.com/tr?id=2161758031425276&ev=PageView&noscript=1"
       min-height: 110px;
     }
 
-    /* Submit Button (#c5a059 theme) */
+    /* Submit Button */
     .submit-btn {
       width: 100%;
       background-color: #c5a059;
@@ -206,6 +206,9 @@ src="https://www.facebook.com/tr?id=2161758031425276&ev=PageView&noscript=1"
 
     <div class="form-card">
       <form id="enquiryForm">
+        <!-- Hidden Tag to route data specifically to Flooring Ads Leads tab -->
+        <input type="hidden" name="leadSource" value="Flooring-Ads">
+
         <div class="form-grid">
           
           <!-- Full Name -->
@@ -252,33 +255,69 @@ src="https://www.facebook.com/tr?id=2161758031425276&ev=PageView&noscript=1"
     </div>
   </div>
 
+  <!-- Unified Form Handler & Meta Pixel Tracking Script -->
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_JA84a_GnEr5JwRac1H4FaMqb3Qm8Dcc4DsbDk5VC2dkAuZP3KeIrKt_Z7iS3arDF/exec"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_JA84a_GnEr5JwRac1H4FaMqb3Qm8Dcc4DsbDk5VC2dkAuZP3KeIrKt_Z7iS3arDF/exec"; 
 
+  document.addEventListener("DOMContentLoaded", function() {
     const enquiryForm = document.getElementById("enquiryForm");
     const submitBtn = document.getElementById("submitBtn");
 
-    enquiryForm.addEventListener("submit", function(e) {
-      e.preventDefault();
+    if (enquiryForm) {
+      enquiryForm.addEventListener("submit", function(e) {
+        e.preventDefault();
 
-      submitBtn.innerText = "Submitting...";
-      submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.innerText = "Submitting...";
+          submitBtn.disabled = true;
+        }
 
-      const formData = new FormData(enquiryForm);
+        // Meta Pixel Lead event tracking
+        if (typeof fbq === 'function') {
+          fbq('track', 'Lead');
+        }
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: formData
-      })
-      .then(response => {
-        window.location.href = "thank-you.html";
-      })
-      .catch(error => {
-        console.error("Error submitting form:", error);
-        window.location.href = "thank-you.html";
+        const formData = new FormData(enquiryForm);
+
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: formData
+        })
+        .then(response => {
+          redirectToThankYou();
+        })
+        .catch(error => {
+          console.error("Error submitting form:", error);
+          redirectToThankYou();
+        });
       });
-    });
+    }
+  });
+
+  function redirectToThankYou() {
+    setTimeout(() => {
+      const hostname = window.location.hostname;
+      
+      // 1. Custom Domain (flooringexpert.in)
+      if (hostname.includes("flooringexpert.in")) {
+        window.location.href = "/thank-you.html";
+      } 
+      // 2. GitHub Pages
+      else if (hostname.includes("github.io")) {
+        window.location.href = "/flooringexpert/thank-you.html";
+      } 
+      // 3. Localhost / Other paths
+      else {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const depth = pathSegments.length > 1 ? pathSegments.length - 1 : 0;
+        const prefix = depth > 0 ? "../".repeat(depth) : "./";
+        window.location.href = prefix + "thank-you.html";
+      }
+    }, 200);
+  }
   </script>
+
+
 <!-- Form Inline Handler Start -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_JA84a_GnEr5JwRac1H4FaMqb3Qm8Dcc4DsbDk5VC2dkAuZP3KeIrKt_Z7iS3arDF/exec"; 
@@ -321,19 +360,12 @@ document.addEventListener("DOMContentLoaded", function() {
 function redirectToThankYou() {
   setTimeout(() => {
     const hostname = window.location.hostname;
-    
-    // 1. Agar Custom Domain (flooringexpert.in) par hai
     if (hostname.includes("flooringexpert.in")) {
       window.location.href = "/thank-you.html";
-    } 
-    // 2. Agar GitHub Pages (username.github.io/flooringexpert) par hai
-    else if (hostname.includes("github.io")) {
+    } else if (hostname.includes("github.io")) {
       window.location.href = "/flooringexpert/thank-you.html";
-    } 
-    // 3. Local Machine ya normal relative structure ke liye
-    else {
+    } else {
       const pathSegments = window.location.pathname.split('/').filter(Boolean);
-      // Agar kisi subfolder ke andar hain toh ../ lagakar root par bhejega
       const depth = pathSegments.length > 1 ? pathSegments.length - 1 : 0;
       const prefix = depth > 0 ? "../".repeat(depth) : "./";
       window.location.href = prefix + "thank-you.html";
@@ -342,5 +374,6 @@ function redirectToThankYou() {
 }
 </script>
 <!-- Form Inline Handler End -->
+
 </body>
 </html>
